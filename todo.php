@@ -1,18 +1,28 @@
 <?php
 
-    $id = $_GET['id'];
-    $action = $_GET['action'];
-    $discription = $_GET['discription'];
+    $id = 0;
+    $action = "";
+    $description = "";
+    
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+    }
+    if (isset($_GET['action'])) {
+        $action = $_GET['action'];
+    }
+    if (isset($_GET['description'])) {
+        $description = $_GET['description'];
+    }
 
     switch ($action) {
         case "add":
-            $sql = 'INSERT INTO tasks (description, is_done, date_added) VALUES ($discription, \'В процессе\',' . date('Y-m-d H:i:s') . ')';
+            $sql = "INSERT INTO tasks (description, is_done, date_added) VALUES ('" . $description . "', 0, '" . date("Y-m-d H:i:s") . "')";
             break;
         case "delete":
-            $sql = 'DELETE FROM tasks WHERE id = $id';
+            $sql = 'DELETE FROM tasks WHERE id = ' . $id;
             break;
         case "done":
-            $sql = 'UPDATE tasks SET is_done = \'Выполнено\' WHERE id = $id';
+            $sql = 'UPDATE tasks SET is_done = 3 WHERE id = ' . $id;
             break;
         default:
             $sql = '';
@@ -25,6 +35,9 @@
         "neto1755",
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $pdo->exec('SET NAMES utf8');
+    if ($sql !='') {
+        $pdo->query($sql);
+    }
     $sql = 'SELECT * FROM tasks';
 ?>
 
@@ -43,8 +56,7 @@
 
       <form method="GET">
         <input type="text" name="description" placeholder="Описание задачи" value="">
-        <input type="hidden" name="action" value="add">
-        <input type="submit" name="save" value="Добавить">
+        <input type="submit" name="action" value="add">
       </form>
 
       <table>
@@ -66,10 +78,10 @@
 
             <?php
                 switch ($row['is_done']) {
-                    case "В процессе":
+                    case 0:
                         $color = "red";
                         break;
-                    case "Выполнено":
+                    case 3:
                         $color = "green";
                         break;
                     default:
