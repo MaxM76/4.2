@@ -3,43 +3,54 @@
     $id = 0;
     $action = "";
     $description = "";
-    
     if (isset($_GET['id'])) {
-        $id = $_GET['id'];
+        $id = (int) $_GET['id'];
     }
     if (isset($_GET['action'])) {
-        $action = $_GET['action'];
+        $action = (string) $_GET['action'];
     }
     if (isset($_GET['description'])) {
-        $description = $_GET['description'];
+        $description = (string) $_GET['description'];
     }
+
+    try {
+        $pdo = new PDO(
+            "mysql:host=localhost;dbname=mmarkelov",
+            "mmarkelov",
+            "neto1755",
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    }
+    catch (PDOException $e) {
+        echo 'Невозможно установить соединение с базой данных';
+        die();
+    }
+
+    $pdo->exec('SET NAMES utf8');
 
     switch ($action) {
         case "add":
-            $sql = "INSERT INTO tasks (description, is_done, date_added) VALUES ('" . $description . "', 0, '" . date("Y-m-d H:i:s") . "')";
+            $sql = "INSERT INTO tasks (description, is_done, date_added) VALUES (:description, 0, :date)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':date' => date("Y-m-d H:i:s"), ':description' => $description]);
             break;
         case "delete":
-            $sql = 'DELETE FROM tasks WHERE id = ' . $id;
+            $sql = 'DELETE FROM tasks WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':id' => $id]);
             break;
         case "done":
-            $sql = 'UPDATE tasks SET is_done = 3 WHERE id = ' . $id;
+            $sql = 'UPDATE tasks SET is_done = 3 WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':id' => $id]);
             break;
         default:
             $sql = '';
             break;
     }
 
-    $pdo = new PDO(
-        "mysql:host=localhost;dbname=mmarkelov",
-        "mmarkelov",
-        "neto1755",
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $pdo->exec('SET NAMES utf8');
-    if ($sql !='') {
-        $pdo->query($sql);
-    }
     $sql = 'SELECT * FROM tasks';
 ?>
+
 
 
 <!DOCTYPE html>
@@ -80,16 +91,19 @@
                 switch ($row['is_done']) {
                     case 0:
                         $color = "red";
+                        $status = "Не сделано";
                         break;
                     case 3:
                         $color = "green";
+                        $status = "Сделано";
                         break;
                     default:
                         $color = "brown";
+                        $status = "Неопределен";
                         break;
                 }
             ?>
-            <td><span style="color: <?=$color?>;"><?=$row['is_done']?></span></td>
+            <td><span style="color: <?=$color?>;"><?=$status?></span></td>
 
             <?php $href = "href=\"?id=" . $row['id'] . "&amp;action="; ?>
             <td>
